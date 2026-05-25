@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐播放器</title>
+    <style>
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #1a237e;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* 播放器容器 */
+.music-player {
+    width: 350px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+/* 播放状态 */
+.play-status {
+    font-size: 14px;
+    text-align: center;
+}
+
+/* 专辑封面 */
+.album-cover {
+    width: 200px;
+    height: 200px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #9c27b0, #ffeb3b);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.disc-hole {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #1a237e;
+}
+
+/* 歌曲名称 */
+.song-name {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* 专辑信息 */
+.album-info {
+    font-size: 14px;
+    text-align: center;
+    opacity: 0.8;
+}
+
+/* 进度条容器 */
+.progress-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.time {
+    font-size: 12px;
+    min-width: 40px;
+    text-align: center;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+}
+
+.progress {
+    height: 100%;
+    background-color: #9c27b0;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.1s;
+}
+
+.progress-handle {
+    position: absolute;
+    top: -4px;
+    width: 16px;
+    height: 16px;
+    background-color: #9c27b0;
+    border-radius: 50%;
+    cursor: pointer;
+    transform: translateX(-50%);
+    left: 0%;
+    transition: left 0.1s;
+}
+
+/* 控制按钮 */
+.controls {
+    display: flex;
+    gap: 20px;
+}
+
+.control-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.control-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.play-btn {
+    background-color: #9c27b0;
+}
+
+.play-btn:hover {
+    background-color: #7b1fa2;
+}
+
+/* 音量控制 */
+.volume-container {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.volume-bar {
+    width: 100%;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+}
+
+.volume {
+    height: 100%;
+    background-color: white;
+    border-radius: 4px;
+    width: 70%;
+    transition: width 0.1s;
+}
+
+.volume-handle {
+    position: absolute;
+    top: -4px;
+    width: 16px;
+    height: 16px;
+    background-color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    transform: translateX(-50%);
+    left: 70%;
+    transition: left 0.1s;
+}
+    </style>
+</head>
+<body>
+    <div class="music-player">
+        <!-- 播放状态 -->
+        <div class="play-status" id="playStatus">播放暂停</div>
+        
+        <!-- 正方形区域 -->
+        <div class="album-cover">
+            <div class="disc-hole"></div>
+        </div>
+        
+        <!-- 歌曲名称 -->
+        <div class="song-name">二面其实也没那么难</div>
+        
+        <!-- 专辑信息 -->
+        <div class="album-info">小A创新创业团队·这就是AI 专辑</div>
+        
+        <!-- 播放进度条 -->
+        <div class="progress-container">
+            <span class="time current-time" id="currentTime">0:00</span>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+                <div class="progress-handle" id="progressHandle"></div>
+            </div>
+            <span class="time total-time" id="totalTime">3:30</span>
+        </div>
+        
+        <!-- 控制按钮 -->
+        <div class="controls">
+            <button class="control-btn prev-btn" id="prevBtn">播放上一首</button>
+            <button class="control-btn play-btn" id="playBtn">暂停与继续</button>
+            <button class="control-btn next-btn" id="nextBtn">播放下一首</button>
+        </div>
+        
+        <!-- 音量控制 -->
+        <div class="volume-container">
+            <div class="volume-bar">
+                <div class="volume" id="volume"></div>
+                <div class="volume-handle" id="volumeHandle"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+// 播放器状态
+let isPlaying = false;
+let currentTime = 0;
+let totalTime = 210; // 3:30
+let volume = 70;
+
+// DOM元素
+const playStatus = document.getElementById('playStatus');
+const playBtn = document.getElementById('playBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const progress = document.getElementById('progress');
+const progressHandle = document.getElementById('progressHandle');
+const progressBar = document.querySelector('.progress-bar');
+const currentTimeEl = document.getElementById('currentTime');
+const totalTimeEl = document.getElementById('totalTime');
+const volumeEl = document.getElementById('volume');
+const volumeHandle = document.getElementById('volumeHandle');
+const volumeBar = document.querySelector('.volume-bar');
+
+// 格式化时间
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// 更新进度条
+function updateProgress() {
+    const percent = (currentTime / totalTime) * 100;
+    progress.style.width = `${percent}%`;
+    progressHandle.style.left = `${percent}%`;
+    currentTimeEl.textContent = formatTime(currentTime);
+}
+
+// 更新音量条
+function updateVolume() {
+    volumeEl.style.width = `${volume}%`;
+    volumeHandle.style.left = `${volume}%`;
+}
+
+// 播放/暂停切换
+function togglePlay() {
+    isPlaying = !isPlaying;
+    playStatus.textContent = isPlaying ? '正在播放' : '播放暂停';
+    
+    if (isPlaying) {
+        // 模拟播放进度
+        playInterval = setInterval(() => {
+            if (currentTime < totalTime) {
+                currentTime += 1;
+                updateProgress();
+            } else {
+                clearInterval(playInterval);
+                isPlaying = false;
+                playStatus.textContent = '播放暂停';
+                currentTime = 0;
+                updateProgress();
+            }
+        }, 1000);
+    } else {
+        clearInterval(playInterval);
+    }
+}
+
+// 上一首
+function playPrev() {
+    // 模拟上一首
+    currentTime = 0;
+    updateProgress();
+    if (isPlaying) {
+        clearInterval(playInterval);
+        togglePlay();
+        togglePlay();
+    }
+}
+
+// 下一首
+function playNext() {
+    // 模拟下一首
+    currentTime = 0;
+    updateProgress();
+    if (isPlaying) {
+        clearInterval(playInterval);
+        togglePlay();
+        togglePlay();
+    }
+}
+
+// 进度条拖拽
+let isDraggingProgress = false;
+
+function startDragProgress(e) {
+    isDraggingProgress = true;
+    updateProgressFromMouse(e);
+}
+
+function updateProgressFromMouse(e) {
+    if (!isDraggingProgress) return;
+    
+    const rect = progressBar.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const percent = Math.max(0, Math.min(100, (offsetX / rect.width) * 100));
+    
+    currentTime = (percent / 100) * totalTime;
+    updateProgress();
+}
+
+function stopDragProgress() {
+    isDraggingProgress = false;
+}
+
+// 音量条拖拽
+let isDraggingVolume = false;
+
+function startDragVolume(e) {
+    isDraggingVolume = true;
+    updateVolumeFromMouse(e);
+}
+
+function updateVolumeFromMouse(e) {
+    if (!isDraggingVolume) return;
+    
+    const rect = volumeBar.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    volume = Math.max(0, Math.min(100, (offsetX / rect.width) * 100));
+    updateVolume();
+}
+
+function stopDragVolume() {
+    isDraggingVolume = false;
+}
+
+// 点击进度条
+function clickProgressBar(e) {
+    const rect = progressBar.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const percent = Math.max(0, Math.min(100, (offsetX / rect.width) * 100));
+    
+    currentTime = (percent / 100) * totalTime;
+    updateProgress();
+}
+
+// 点击音量条
+function clickVolumeBar(e) {
+    const rect = volumeBar.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    volume = Math.max(0, Math.min(100, (offsetX / rect.width) * 100));
+    updateVolume();
+}
+
+// 事件监听
+playBtn.addEventListener('click', togglePlay);
+prevBtn.addEventListener('click', playPrev);
+nextBtn.addEventListener('click', playNext);
+
+// 进度条事件
+progressBar.addEventListener('click', clickProgressBar);
+progressHandle.addEventListener('mousedown', startDragProgress);
+document.addEventListener('mousemove', updateProgressFromMouse);
+document.addEventListener('mouseup', stopDragProgress);
+
+// 音量条事件
+volumeBar.addEventListener('click', clickVolumeBar);
+volumeHandle.addEventListener('mousedown', startDragVolume);
+document.addEventListener('mousemove', updateVolumeFromMouse);
+document.addEventListener('mouseup', stopDragVolume);
+
+// 初始化
+function init() {
+    totalTimeEl.textContent = formatTime(totalTime);
+    updateProgress();
+    updateVolume();
+}
+
+init();
+    </script>
+</body>
+</html>
