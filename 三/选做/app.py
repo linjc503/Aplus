@@ -24,7 +24,7 @@ collection = client.get_or_create_collection(
 )
 
 # Qwen Agent配置
-DASHSCOPE_API_KEY = "sk-8d51adfffd084d8c96936785d23cfdca"  # 用户需要填写自己的API Key
+DASHSCOPE_API_KEY = "Your API KEY"  # 用户需要填写自己的API Key
 
 # 零样本分类的类别
 CATEGORIES = ["Topwear", "Bottomwear", "Accessories", "Footwear", "PersonalCare"]
